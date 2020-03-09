@@ -1,0 +1,86 @@
+import pandas as pd
+
+print('Задача 1: DateTime index')
+'''
+Подгрузите данные 'data.csv' (возможно придется указать кодировку encoding сp1250)
+Преобразуйте колонку Invoice Date в DateTime index
+Удалите колонку Invoice Date
+Сохраните получившуюся табличку в новую переменную data
+'''
+data = pd.read_csv('data.csv', encoding='cp1250')
+data.index= pd.to_datetime(data['InvoiceDate'])
+data.drop('InvoiceDate',axis=1,inplace=True)
+print(data)
+
+print('Задача 2')
+'''
+Используя табличку, полученную в результате выполнения предыдущей задачи, выберите все заказы, совершенные за период 7 Декабря 2010 года с часа дня до часа и одной минуты.  '''
+
+#data_1 = data[(data.index.month==12)&(data.index.day==7)&(data.index.year==2010)&(data.index.hour==13)&(data.index.minute<=1)]
+#print(data_1)
+
+print(data['2010/12/7 13:00' : '2010/12/7 13:01'])
+
+print('Задача 3')
+'''
+По той же рабочей табличке:
+* посчитайте кол-во уникальных наименований товаров, которые купили за весь период (т.е. по всем данным). Используйте соответствующий метод
+* найдите все уникальные страны, в которых были размещены заказы
+'''
+data_2 = data.loc[:,['StockCode','Country']]
+print(data_2.nunique())
+print(data.nunique())
+print(data.Country.unique())
+
+
+print('Задача 4')
+'''
+* Посчитайте матрицу корреляции Спирмена для наших данных
+* Найдите 1%, 50% и 99% квантили цены за единицу товара'''
+
+print(data.corr(method='spearman'))
+print(data['UnitPrice'].quantile([0.01, 0.5, 0.99]))
+
+print('Задача 5')
+'''
+Найдите количество клиентов, которые оформляли заказ в понедельники. Для этого:
+* сделайте подвыборку, соответствующую условию "в понедельник", используйте метод datetime индекса weekday_name
+* посчитайте кол-во уникальных ID клиентов'''
+
+data_1=data[(data.index.weekday_name=='Monday') ]
+print(data_1['CustomerID'].nunique())
+
+print('Задача 6')
+'''
+Создайте новый столбец TotalCost со значениями Quantity * UnitPrice. Сделайте resampling данных в еженедельные со значениями суммы по столбцам TotalCost.'''
+
+data['TotalCost']=data['Quantity']*data['UnitPrice']
+print(data.resample('W')['TotalCost'].sum())
+#print(data)
+
+print('Задача 7')
+'''
+Посчитайте скользящее недельное среднее суммы ежедневных заказов. Для этого:
+* Сделайте resampling в ежедневные данные
+* Посчитайте скользящее среднее за 7 дней по столбцу TotalCost'''
+
+print(data)
+print(data.resample('D')['TotalCost'].rolling(7).mean())
+
+print('Задача 8: GroupBy')
+'''
+Посчитайте общую стоимость заказов на ежемесячной основе в разбивке по странам'''
+
+print(data.groupby(['Country']).resample('M').sum())
+
+print('Задача 9: JOIN')
+'''
+* Подгрузите данные, содержащие информацию о номерах карт лояльности пользователей (card_data.csv)
+* Назовите ее cards
+* Сделайте Left Join исходной таблицы (которая получилась после задачи с datetime индексом) и таблицы cards
+'''
+
+cards= pd.read_csv('card_data.csv')
+print(cards)
+
+print(data.merge(cards, on='CustomerID', how='left'))
